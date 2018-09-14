@@ -10,7 +10,7 @@ var todos = [
   {_id: new ObjectId(), text: 'todo 1'},
   {_id: new ObjectId(), text: 'todo 2'},
   {_id: new ObjectId(), text: 'todo 3'},
-  {_id: new ObjectId(), text: 'todo 4'}
+  {_id: new ObjectId(), text: 'todo 4', completed: true, completedAt: 123}
 ];
 
 beforeEach((done) => {
@@ -162,5 +162,33 @@ describe('testing server.js DELETE', () => {
         .end(done)
     })
 
+  })
+})
+
+describe('PUT /todos/:id', () => {
+  it('should update the todo', (done) => {
+    var body = {text: 'updating for test', completed: true};
+    request(app)
+      .put(`/todos/${todos[0]._id.toHexString()}`)
+      .send(body)
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.todo.text).toBe(body.text);
+        expect(res.body.todo.completed).toBe(body.completed);
+        expect(res.body.todo.completedAt).toBeDefined();
+      })
+      .end(done);
+  })
+  it('should clear properties when not completed', (done) => {
+    var body = {completed: false};
+    request(app)
+      .put(`/todos/${todos[3]._id.toHexString()}`)
+      .send(body)
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.todo.completed).toBe(body.completed);
+        expect(res.body.todo.completedAt).toBeNull();
+      })
+      .end(done);
   })
 })
