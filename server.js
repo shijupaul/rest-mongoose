@@ -46,6 +46,24 @@ app.get('/todos/:id', (req,res) => {
     })
 });
 
+app.delete('/todos/:id', (req,res) => {
+  var id = req.params.id;
+  if (!ObjectId.isValid(id)) {
+    return res.status(404).send({message: `Invalid ObjectId ${id}`});
+  }
+  Todos.findByIdAndRemove(id)
+    .then((doc) => {
+      if (!doc) {
+        return res.status(404).send({message: `Object not found matching Id ${id}`});
+      }
+      res.send(doc);
+    })
+    .catch((err) => {
+      res.status(400).send({message: `Object not found matching Id ${id}`})
+    })
+
+});
+
 app.listen(port, () => {
   console.log(`started server on port ${port}`);
 })
