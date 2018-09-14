@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const express = require('express');
 const bodyParser = require('body-parser');
 const {ObjectId} = require('mongodb');
@@ -52,17 +53,40 @@ app.delete('/todos/:id', (req,res) => {
     return res.status(404).send({message: `Invalid ObjectId ${id}`});
   }
   Todos.findByIdAndRemove(id)
-    .then((doc) => {
-      if (!doc) {
+    .then((todo) => {
+      if (!todo) {
         return res.status(404).send({message: `Object not found matching Id ${id}`});
       }
-      res.send(doc);
+      res.send({todo});
     })
     .catch((err) => {
       res.status(400).send({message: `Object not found matching Id ${id}`})
     })
 
 });
+
+app.put('/todos/:id', (req,res) => {
+  var id = req.params.id;
+  if (!ObjectId.isValid(id)) {
+    return res.status(404).send({message: `Invalid ObjectId ${id}`});
+  }
+  var object = _.pick(req.body, ['text', 'completed']);
+  if (_.isBoolean(object.completed) && object.completed) {
+    object.completedAt = new Date().getTime();
+  } else {
+    object.completed = false;
+    object.completedAt = null;
+  }
+  Todos.findByIdAndUpdate(id, {$set: object}, {new: true})
+    .then( (todo) => {
+      if (!todo) {
+        return res.status(404).send({message: `Object not found matching Id ${id}`});
+      }
+      res.send({todo});
+    })
+    .catch( (err) => res.status(400).send({message: `Object not found matching Id ${id}`}));
+});
+
 
 app.listen(port, () => {
   console.log(`started server on port ${port}`);

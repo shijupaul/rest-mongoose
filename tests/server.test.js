@@ -117,3 +117,50 @@ describe('testing server.js GET', () => {
 
   })
 })
+
+
+describe('testing server.js DELETE', () => {
+  describe('/todos/:id', () => {
+    it('should DELETE matching todo', (done) => {
+      request(app)
+        .delete(`/todos/${todos[0]._id.toHexString()}`)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.todo.text).toBe(todos[0].text)
+        })
+        .end((err, res) => {
+          if (err) {
+            return done(err)
+          }
+          Todos.findById(todos[0]._id.toHexString())
+            .then((doc) => {
+              expect(doc).toBeNull();
+              done();
+            })
+            .catch((e) => done(e))
+        })
+    })
+
+    it('should fail for invalid id', (done) => {
+      request(app)
+        .delete('/todos/123')
+        .expect(404)
+        .expect((res) => {
+          expect(res.body.message).toBe('Invalid ObjectId 123');
+        })
+        .end(done)
+    })
+
+    it('should fail for tampered id', (done) => {
+      var objectId = new ObjectId().toHexString();
+      request(app)
+        .delete(`/todos/${objectId}`)
+        .expect(404)
+        .expect((res) => {
+          expect(res.body.message).toBe(`Object not found matching Id ${objectId}`);
+        })
+        .end(done)
+    })
+
+  })
+})
