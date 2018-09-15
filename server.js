@@ -7,6 +7,7 @@ const {ObjectId} = require('mongodb');
 const {mongoose} = require('./db/config');
 const {Todos} = require('./model/todos');
 const {User} = require('./model/user');
+const {authenticate} = require('./middleware/authenticate');
 
 const port = process.env.PORT;
 
@@ -89,6 +90,24 @@ app.put('/todos/:id', (req,res) => {
     .catch( (err) => res.status(400).send({message: `Object not found matching Id ${id}`}));
 });
 
+app.post('/users', (req,res) => {
+  var body = _.pick(req.body, ['email','password']);
+  var user = new User(body);
+  user.save()
+    .then((user) => {
+      return user.generateAuthToken() // returns the promise along with it's then
+    })
+    .then((token) => { // will get token --> promise and it's then will get executed
+      //var body = _.pick(user, ['email', '_id']); // same user object in memory
+      res.header('x-auth', token).send(user); // custom header starts with x-
+    })
+    .catch((err) => res.status(400).send(err))
+})
+
+// calling the custom middleware -- can have number of functions in the list
+app.get('/users/me', authenticate ,(req,res) => {
+  res.send(req.user);
+});
 
 app.listen(port, () => {
   console.log(`started server on port ${port}`);
