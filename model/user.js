@@ -70,6 +70,27 @@ userSchema.statics.findByToken = function(token) {
   });
 }
 
+// Static method
+userSchema.statics.findByCredentials = function(email, password) {
+  return User.findOne({email})
+    .then((user) => {
+      if (!user) {
+        return Promise.reject({message: `Failed to find matching user with email ${email}`})
+      }
+
+      return new Promise((resolve, reject) => {
+        bcrypt.compare(password, user.password, (err, res) => {
+          console.log('outcome:', res)
+          if (res) {
+            return resolve(user);
+          }
+          reject({message: `Failed while comparing hashes for email ${email}`});
+
+        })
+      });
+    })
+}
+
 // mongoose middleware -- here before saving
 userSchema.pre('save', function(next) {
   var user = this //
