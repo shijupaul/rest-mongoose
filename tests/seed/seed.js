@@ -13,20 +13,24 @@ var users = [{
   email: 'shijuppaul@hotmail.com',
   password: 'Joel2004',
   tokens: [{
-    token: jwt.sign({_id: userOneId.toHexString(), access}, 'abc123'),
+    token: jwt.sign({_id: userOneId.toHexString(), access}, process.env.JWT_SECRET),
     access,
   }]
 },{
   _id: userTwoId,
   email: 'shiju.paul@blackcatsolutions.co.uk',
-  password: 'Joel2004'
+  password: 'Joel2004',
+  tokens: [{
+    token: jwt.sign({_id: userTwoId.toHexString(), access}, process.env.JWT_SECRET),
+    access,
+  }]
 }]
 
 var todos = [
-  {_id: new ObjectId(), text: 'todo 1'},
-  {_id: new ObjectId(), text: 'todo 2'},
-  {_id: new ObjectId(), text: 'todo 3'},
-  {_id: new ObjectId(), text: 'todo 4', completed: true, completedAt: 123}
+  {_id: new ObjectId(), text: 'todo 1', _creator: userOneId},
+  {_id: new ObjectId(), text: 'todo 2', _creator: userOneId},
+  {_id: new ObjectId(), text: 'todo 3', _creator: userTwoId},
+  {_id: new ObjectId(), text: 'todo 4', _creator: userTwoId, completed: true, completedAt: 123}
 ];
 
 const populateTodos = (done) => {

@@ -43,7 +43,7 @@ userSchema.methods.toJSON = function() {
 userSchema.methods.generateAuthToken = function() {
   var user = this;
   var access = 'auth';
-  var token = jwt.sign({_id: user._id.toHexString(), access}, 'abc123');
+  var token = jwt.sign({_id: user._id.toHexString(), access}, process.env.JWT_SECRET);
   user.tokens.push({access, token});
   return user.save() // returning a promise that has then attached to it
     .then(() => {
@@ -67,7 +67,7 @@ userSchema.methods.removeToken = function(token) {
 userSchema.statics.findByToken = function(token) {
   var decoded;
   try {
-    decoded = jwt.verify(token,'abc123');
+    decoded = jwt.verify(token,process.env.JWT_SECRET);
     console.log(`Token creation time:${new Date(decoded.iat).toDateString()}, Now:${new Date().toDateString()}`);
   } catch(e) {
     // return new Promise((resolve,reject) => { // return new promise that rejects

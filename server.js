@@ -14,17 +14,20 @@ const port = process.env.PORT;
 var app = express();
 app.use(bodyParser.json()); // use json parser for body
 
-app.post('/todos', (req,res) => {
+app.post('/todos', authenticate, (req,res) => {
   var todosNew = new Todos({
-    text: req.body.text
+    text: req.body.text,
+    _creator:req.user._id
   });
   todosNew.save()
     .then((doc) => {res.send(doc)})
     .catch((err) => {res.status(400).send(err)})
 });
 
-app.get('/todos', (req,res) => {
-  Todos.find()
+app.get('/todos', authenticate, (req,res) => {
+  Todos.find({
+    _creator: req.user._id
+  })
     .then((todos) => {
       res.send({todos});
     })
@@ -33,12 +36,15 @@ app.get('/todos', (req,res) => {
     })
 });
 
-app.get('/todos/:id', (req,res) => {
+app.get('/todos/:id', authenticate, (req,res) => {
   var id = req.params.id;
   if (!ObjectId.isValid(id)) {
     return res.status(404).send({message: `Invalid ObjectId ${id}`})
   }
-  Todos.findById(id)
+  Todos.findOne({
+    _id:id,
+    _creator: req.user._id
+  })
     .then((todo) => {
       if (!todo) {
         return res.status(404).send({message: `Object not found matching Id ${id}`})
@@ -50,12 +56,15 @@ app.get('/todos/:id', (req,res) => {
     })
 });
 
-app.delete('/todos/:id', (req,res) => {
+app.delete('/todos/:id', authenticate, (req,res) => {
   var id = req.params.id;
   if (!ObjectId.isValid(id)) {
     return res.status(404).send({message: `Invalid ObjectId ${id}`});
   }
-  Todos.findByIdAndRemove(id)
+  Todos.findOneAndRemove({
+    _id: id,
+    _creator: req.user._id
+  })
     .then((todo) => {
       if (!todo) {
         return res.status(404).send({message: `Object not found matching Id ${id}`});
@@ -68,7 +77,7 @@ app.delete('/todos/:id', (req,res) => {
 
 });
 
-app.put('/todos/:id', (req,res) => {
+app.put('/todos/:id', authenticate, (req,res) => {
   var id = req.params.id;
   if (!ObjectId.isValid(id)) {
     return res.status(404).send({message: `Invalid ObjectId ${id}`});
@@ -80,7 +89,7 @@ app.put('/todos/:id', (req,res) => {
     object.completed = false;
     object.completedAt = null;
   }
-  Todos.findByIdAndUpdate(id, {$set: object}, {new: true})
+  Todos.findOneAndUpdate({_id: id, _creator: req.user._id}, {$set: object}, {new: true})
     .then( (todo) => {
       if (!todo) {
         return res.status(404).send({message: `Object not found matching Id ${id}`});
