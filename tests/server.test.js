@@ -257,3 +257,52 @@ describe('POST /users', () => {
       .end(done);
   })
 })
+
+describe('POST /users/login', () => {
+  it('should return a valid user when credentials match', (done) => {
+    var email = users[1].email
+    var password = users[1].password
+    request(app)
+      .post('/users/login')
+      .send({email,password})
+      .expect(200)
+      .expect((res) => {
+        expect(res.header['x-auth']).toBeTruthy()
+        expect(res.body.email).toBe(email);
+      })
+      .end((err, res) => {
+        if (err) {
+          return done(err);
+        }
+        User.findById(users[1]._id)
+          .then((user) => {
+            expect(user.tokens[0]).toHaveProperty('token',res.header['x-auth'])
+            done()
+          })
+          .catch( (e) => done(e))
+      })
+  })
+
+  it('should error 400 when password don\'t match', (done) => {
+    var email = users[1].email
+    var password = users[1]. password + '123'
+    request(app)
+      .post('/users/login')
+      .send({email,password})
+      .expect(400)
+      .expect((res) => {
+        expect(res.header['x-auth']).toBeFalsy()
+      })
+      .end((err, res) => {
+        if (err) {
+          return done(err)
+        }
+        User.findById(users[1]._id)
+          .then((user) => {
+            expect(user.tokens.length).toBe(0)
+            done()
+          })
+          .catch( (e) => done(e))
+      })
+  })
+})
